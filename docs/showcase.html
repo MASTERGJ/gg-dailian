@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>gg-dailian — 已解密档案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:    #e8e2d5;
+    --ink:   #1a1612;
+    --red:   #cc2200;
+    --grey:  #7a7268;
+    --mono:  'IBM Plex Mono', 'Courier New', monospace;
+    --sans:  -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  }
+  html { background: var(--bg); scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(26,22,18,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(26,22,18,.045) 1px, transparent 1px);
+    background-size: 36px 36px; pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* ═══ PASSWORD GATE ═══ */
+  .pw-gate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--ink); display: flex; align-items: center; justify-content: center;
+  }
+  .pw-gate.hidden { display: none; }
+  .pw-gate__box {
+    border: 2px solid rgba(232,226,213,.15); padding: 48px 40px;
+    text-align: center; max-width: 360px;
+  }
+  .pw-gate__stamp {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 3px;
+    color: var(--red); text-transform: uppercase; margin-bottom: 28px;
+  }
+  .pw-gate__label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 2px;
+    color: rgba(232,226,213,.3); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .pw-gate__input {
+    width: 100%; background: rgba(232,226,213,.06); border: 1px solid rgba(232,226,213,.12);
+    color: var(--red); font-family: var(--mono); font-size: 24px; letter-spacing: 6px;
+    text-align: center; padding: 14px; outline: none; transition: border-color .2s;
+  }
+  .pw-gate__input:focus { border-color: var(--red); }
+  .pw-gate__err {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    color: var(--red); margin-top: 10px; opacity: 0; transition: opacity .2s;
+  }
+  .pw-gate__err.show { opacity: 1; }
+
+  /* ═══ TOPBAR ═══ */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 48px;
+    background: var(--ink); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 48px; z-index: 600;
+  }
+  .topbar__mark { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; letter-spacing: 2px; color: var(--red); text-decoration: none; }
+  .topbar__mark span { width: 8px; height: 8px; background: var(--red); display: block; }
+  .topbar__nav { display: flex; gap: 28px; }
+  .topbar__nav a { font-family: var(--mono); font-size: 12px; letter-spacing: 1.5px; color: #666; text-decoration: none; transition: color .15s; }
+  .topbar__nav a:hover { color: #ccc; }
+  .topbar__gh {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+    color: rgba(232,226,213,.25); text-decoration: none; border: 1px solid rgba(232,226,213,.12);
+    padding: 5px 12px; transition: all .15s;
+  }
+  .topbar__gh:hover { color: rgba(232,226,213,.6); border-color: rgba(232,226,213,.3); }
+
+  /* ═══ SECTION ═══ */
+  .screen { min-height: 100vh; padding: 110px 8vw 80px; display: flex; flex-direction: column; justify-content: center; border-bottom: 2px solid rgba(26,22,18,.12); }
+  .screen--dark { background: var(--ink); color: #e8e2d5; }
+  .screen--dark { border-color: rgba(232,226,213,.06); }
+  .screen--red { background: var(--red); color: #e8e2d5; border-color: rgba(232,226,213,.1); }
+
+  /* ═══ TYPOGRAPHY ═══ */
+  .kicker { font-family: var(--mono); font-size: 15px; letter-spacing: 3px; color: var(--red); text-transform: uppercase; margin-bottom: 28px; line-height: 2; }
+  .screen--dark .kicker, .screen--red .kicker { color: rgba(232,226,213,.4); }
+  .h-title { font-size: clamp(48px, 8vw, 110px); font-weight: 900; line-height: .93; letter-spacing: -3px; color: var(--ink); }
+  .screen--dark .h-title, .screen--red .h-title { color: var(--bg); }
+  .h-title em { font-style: normal; color: var(--red); }
+  .body-text { font-size: 22px; line-height: 2; color: var(--grey); max-width: 640px; margin-top: 32px; }
+  .screen--dark .body-text { color: rgba(232,226,213,.45); }
+  .divider { display: block; height: 3px; background: var(--ink); margin: 32px 0; max-width: 80px; }
+  .screen--dark .divider { background: rgba(232,226,213,.15); }
+
+  /* ═══ COVER ═══ */
+  .cover { display: grid; grid-template-columns: 1fr 360px; gap: 48px 60px; align-items: start; }
+  .cover__left { grid-column: 1; }
+  .cover__right { grid-column: 2; }
+  .cover__bottom { grid-column: 1 / -1; }
+  .cover__eyebrow { display: flex; align-items: center; gap: 16px; margin-bottom: 36px; }
+  .cover__star { width: 36px; height: 36px; background: var(--red); clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); flex-shrink: 0; }
+  .cover__eyebrow-text { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--grey); line-height: 1.8; }
+  .cover__panel { border: 2px solid var(--ink); }
+  .cover__panel-head { background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 12px; letter-spacing: 2px; padding: 12px 18px; text-transform: uppercase; }
+  .cover__panel-body { padding: 6px 0; }
+  .cover__panel-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 18px; border-bottom: 1px solid rgba(26,22,18,.1); }
+  .cover__panel-row:last-child { border-bottom: none; }
+  .cover__panel-label { font-family: var(--mono); font-size: 13px; letter-spacing: 1px; color: var(--grey); text-transform: uppercase; flex-shrink: 0; }
+  .cover__panel-value { font-family: var(--mono); font-size: 15px; color: var(--ink); font-weight: 500; text-align: right; }
+
+  /* ═══ STAMP ═══ */
+  .stamp {
+    display: inline-block; border: 6px solid var(--red); padding: 20px 36px 14px;
+    font-family: var(--mono); color: var(--red); text-align: center; line-height: 1.3;
+    transform: scale(1.4) rotate(-10deg); margin-top: 20px;
+  }
+  .stamp__main { display: block; font-size: 44px; font-weight: 900; letter-spacing: 6px; }
+  .stamp__sub { display: block; font-size: 12px; letter-spacing: 3px; opacity: .7; border-top: 2px solid var(--red); padding-top: 6px; margin-top: 6px; }
+
+  /* ═══ CH HEADER ═══ */
+  .ch-header { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .ch-header__right { padding-top: 8px; }
+
+  /* ═══ STAGES ═══ */
+  .stages { display: grid; grid-template-columns: repeat(5,1fr); border: 2px solid var(--ink); margin-top: 36px; }
+  .stage { padding: 28px 20px; border-right: 2px solid var(--ink); }
+  .stage:last-child { border-right: none; }
+  .stage--now { background: var(--ink); }
+  .stage__num { font-family: var(--mono); font-size: 13px; letter-spacing: 2px; color: rgba(26,22,18,.25); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .stage__num::before { content: ''; display: block; width: 16px; height: 2px; background: currentColor; }
+  .stage--now .stage__num { color: rgba(232,226,213,.25); }
+  .stage__title { font-size: 24px; font-weight: 900; color: rgba(26,22,18,.28); line-height: 1.2; margin-bottom: 10px; }
+  .stage--now .stage__title { color: var(--bg); }
+  .stage__desc { font-family: var(--mono); font-size: 13px; line-height: 1.8; color: rgba(26,22,18,.22); }
+  .stage--now .stage__desc { color: rgba(232,226,213,.4); }
+
+  /* ═══ FLOW ═══ */
+  .flow { display: flex; align-items: center; border: 2px solid var(--ink); margin-top: 36px; }
+  .flow__node { flex: 1; padding: 22px 16px; border-right: 2px solid var(--ink); text-align: center; }
+  .flow__node:last-child { border-right: none; }
+  .flow__node--accent { background: var(--ink); }
+  .flow__label { font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--grey); margin-bottom: 6px; text-transform: uppercase; }
+  .flow__node--accent .flow__label { color: rgba(232,226,213,.35); }
+  .flow__title { font-size: 20px; font-weight: 800; color: var(--ink); line-height: 1.3; }
+  .flow__node--accent .flow__title { color: var(--bg); }
+
+  /* ═══ BIG QUOTE ═══ */
+  .big-quote { border-left: 4px solid var(--red); padding-left: 32px; max-width: 720px; margin-top: 36px; }
+  .big-quote p { font-size: 32px; font-weight: 800; line-height: 1.5; color: var(--ink); }
+  .jscreen--dark .big-quote p { color: var(--bg); }
+  .big-quote cite { display: block; margin-top: 16px; font-family: var(--mono); font-size: 14px; letter-spacing: 2px; color: var(--grey); font-style: normal; }
+
+  /* ═══ COMPARE ═══ */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); margin-top: 36px; }
+  .compare__col { border-right: 2px solid var(--ink); }
+  .compare__col:last-child { border-right: none; }
+  .compare__head { background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 14px; letter-spacing: 2px; padding: 12px 18px; text-transform: uppercase; }
+  .compare__body { padding: 24px 18px; }
+  .compare__list { list-style: none; }
+  .compare__list li { font-size: 18px; line-height: 2.2; color: var(--grey); padding: 4px 0; }
+  .compare__list li::before { content: '— '; color: var(--red); font-family: var(--mono); }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    padding: 60px 8vw; border-bottom: none;
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;
+  }
+  .footer__links { display: flex; gap: 32px; }
+  .footer__links a { font-family: var(--mono); font-size: 13px; letter-spacing: 2px; color: var(--grey); text-decoration: none; transition: color .15s; }
+  .footer__links a:hover { color: var(--red); }
+  .footer__sig { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: rgba(26,22,18,.15); text-transform: uppercase; margin-top: 16px; }
+
+  @media (max-width: 900px) {
+    .cover { grid-template-columns: 1fr; }
+    .cover__right { grid-column: 1; }
+    .cover__bottom { grid-column: 1; }
+    .ch-header { grid-template-columns: 1fr; gap: 24px; }
+    .stages { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; }
+    .flow__node { border-right: none; border-bottom: 1px solid var(--ink); width: 100%; }
+    .topbar__nav { display: none; }
+    .topbar { padding: 0 16px; }
+    .screen { padding: 80px 5vw 60px; }
+    .body-text { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ PASSWORD GATE ═══ -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-gate__box">
+    <div class="pw-gate__stamp">RESTRICTED</div>
+    <div class="pw-gate__label">Paste Code</div>
+    <input type="password" class="pw-gate__input" id="pwInput" maxlength="16" placeholder="········" autofocus>
+    <div class="pw-gate__err" id="pwErr">CODE: INVALID</div>
+  </div>
+</div>
+
+<!-- ═══ TOPBAR ═══ -->
+<header class="topbar">
+  <a class="topbar__mark" href="#cover"><span></span>gg-dailian / ARCHIVE</a>
+  <nav class="topbar__nav">
+    <a href="#what">WHAT</a>
+    <a href="#how">HOW</a>
+    <a href="#why">WHY</a>
+    <a href="#use">USE</a>
+  </nav>
+  <a class="topbar__gh" href="https://github.com/MASTERGJ/gg-dailian">GITHUB ↗</a>
+</header>
+
+<!-- ═══ COVER ═══ -->
+<section class="screen" id="cover">
+  <div class="cover">
+    <div class="cover__left">
+      <div class="cover__eyebrow">
+        <div class="cover__star"></div>
+        <div class="cover__eyebrow-text">OPEN-SOURCE AGENT SKILL<br>外部素材的证据化理解与资产化交付</div>
+      </div>
+      <h1 class="h-title">来源<br>即<br><em>证据</em></h1>
+      <span class="divider"></span>
+      <p class="body-text" style="margin-top:0">不只是看视频、读文章。<br>是把外部素材变成可验证的理解、<br>可复用的结构、可交付的资产。</p>
+    </div>
+    <div class="cover__right">
+      <div class="cover__panel">
+        <div class="cover__panel-head">Archive Parameters</div>
+        <div class="cover__panel-body">
+          <div class="cover__panel-row"><span class="cover__panel-label">Version</span><span class="cover__panel-value">v1.0.0</span></div>
+          <div class="cover__panel-row"><span class="cover__panel-label">License</span><span class="cover__panel-value">MIT</span></div>
+          <div class="cover__panel-row"><span class="cover__panel-label">Sources</span><span class="cover__panel-value">Video · Web · Image · Text</span></div>
+          <div class="cover__panel-row"><span class="cover__panel-label">Output</span><span class="cover__panel-value">Analysis · Artifact · HTML</span></div>
+          <div class="cover__panel-row"><span class="cover__panel-label">Author</span><span class="cover__panel-value">MASTERGJ</span></div>
+        </div>
+      </div>
+      <div class="stamp">
+        <span class="stamp__main">DECLASSIFIED</span>
+        <span class="stamp__sub">2026-06-11</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHAT ═══ -->
+<section class="screen screen--dark" id="what">
+  <p class="kicker">01 / What It Is</p>
+  <div class="ch-header">
+    <div class="ch-header__left"><h2 class="h-title" style="color:var(--bg)">外部素材<br><em>情报</em><br>系统</h2></div>
+    <div class="ch-header__right">
+      <p class="body-text">
+        这不是一个下载器。<br>不是一个摘要生成器。<br><br>
+        它是一个<strong style="color:var(--bg)">源情报操作系统</strong>——<br>
+        把视频、网页、截图、音视频材料<br>
+        转成证据支撑的理解、价值判断、<br>可复用模式和可交付资产。
+      </p>
+    </div>
+  </div>
+  <div class="flow" style="margin-top:48px">
+    <div class="flow__node flow__node--accent"><div class="flow__label">Source</div><div class="flow__title">来源素材</div></div>
+    <div class="flow__node"><div class="flow__label">Understand</div><div class="flow__title">证据化理解</div></div>
+    <div class="flow__node flow__node--accent"><div class="flow__label">Judge</div><div class="flow__title">价值判断</div></div>
+    <div class="flow__node"><div class="flow__label">Extract</div><div class="flow__title">可复用模式</div></div>
+    <div class="flow__node flow__node--accent"><div class="flow__label">Deliver</div><div class="flow__title">用户可交付物</div></div>
+  </div>
+</section>
+
+<!-- ═══ HOW ═══ -->
+<section class="screen" id="how">
+  <p class="kicker">02 / How It Works</p>
+  <div class="ch-header">
+    <div class="ch-header__left"><h2 class="h-title">五个<br><em>阶段</em><br>一条线</h2></div>
+    <div class="ch-header__right"><p class="body-text" style="margin-top:0">从第一眼到最终交付，<br>每一步都有证据边界和输出契约。</p></div>
+  </div>
+  <div class="stages">
+    <div class="stage"><div class="stage__num">Stage 01</div><div class="stage__title">快速观察</div><div class="stage__desc">最低成本的第一印象<br>和初价值判断</div></div>
+    <div class="stage stage--now"><div class="stage__num">Stage 02</div><div class="stage__title">深度拆解</div><div class="stage__desc">识别价值类型<br>和来源运作方式</div></div>
+    <div class="stage"><div class="stage__num">Stage 03</div><div class="stage__title">价值阈值</div><div class="stage__desc">根据素材厚度<br>决定产物规模</div></div>
+    <div class="stage"><div class="stage__num">Stage 04</div><div class="stage__title">产物转换</div><div class="stage__desc">把价值变成实践、<br>模板、清单、SOP</div></div>
+    <div class="stage"><div class="stage__num">Stage 05</div><div class="stage__title">持久表达</div><div class="stage__desc">强结果打包成<br>展示页、知识笔记</div></div>
+  </div>
+</section>
+
+<!-- ═══ WHY ═══ -->
+<section class="screen screen--dark" id="why">
+  <p class="kicker">03 / Why It Matters</p>
+  <div class="ch-header">
+    <div class="ch-header__left"><h2 class="h-title" style="color:var(--bg)">跟普通<br>分析<br><em>不一样</em></h2></div>
+    <div class="ch-header__right">
+      <p class="body-text">不是看完说感受。<br>是每条判断都能回到来源。<br><br>不是每个素材都做大报告。<br>薄素材给紧凑结论，<br>厚素材才值得深挖。</p>
+    </div>
+  </div>
+  <div class="compare" style="margin-top:48px">
+    <div class="compare__col">
+      <div class="compare__head" style="background:#2a2420">普通分析</div>
+      <div class="compare__body">
+        <ul class="compare__list">
+          <li>看完写观后感</li>
+          <li>拍脑袋说价值</li>
+          <li>每个素材一样对待</li>
+          <li>输出格式一成不变</li>
+          <li>不知道哪句是猜的</li>
+        </ul>
+      </div>
+    </div>
+    <div class="compare__col">
+      <div class="compare__head">gg-dailian</div>
+      <div class="compare__body">
+        <ul class="compare__list">
+          <li>证据索引 + 时间戳</li>
+          <li>价值类型 + 阈值判断</li>
+          <li>源类型自动路由</li>
+          <li>SOP / 教程 / 展示页 / 笔记</li>
+          <li>证据边界显式标注</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="big-quote" style="margin-top:48px">
+    <p>证据在观点之前。<br>最便宜的可用证据先上。<br>来源边界必须显式标注。<br><em style="color:var(--red)">不猜不编。</em></p>
+    <cite>— gg-dailian Design Principles</cite>
+  </div>
+</section>
+
+<!-- ═══ USE ═══ -->
+<section class="screen screen--red" id="use">
+  <p class="kicker" style="color:rgba(232,226,213,.5)">04 / Use & Install</p>
+  <h2 class="h-title">一行<br>命令<br><em>接入</em></h2>
+  <div class="flow" style="margin-top:48px;border-color:rgba(232,226,213,.2)">
+    <div class="flow__node" style="border-color:rgba(232,226,213,.2)">
+      <div class="flow__label" style="color:rgba(232,226,213,.35)">Clone</div>
+      <div class="flow__title" style="color:var(--bg)">git clone</div>
+    </div>
+    <div class="flow__node flow__node--accent" style="background:rgba(0,0,0,.3);border-color:rgba(232,226,213,.2)">
+      <div class="flow__label">Copy</div>
+      <div class="flow__title" style="color:var(--bg)">cp to skills/</div>
+    </div>
+    <div class="flow__node" style="border-color:rgba(232,226,213,.2)">
+      <div class="flow__label" style="color:rgba(232,226,213,.35)">Trigger</div>
+      <div class="flow__title" style="color:var(--bg)">$skill-name</div>
+    </div>
+  </div>
+  <p class="body-text" style="color:rgba(232,226,213,.5);margin-top:36px">
+    适配所有 Markdown-skill-capable 的 Agent 环境。<br>
+    Hermes · Claude Code · Codex · OpenCode
+  </p>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<section class="screen footer" style="min-height:auto;justify-content:center">
+  <div class="stamp" style="transform:scale(1) rotate(-6deg)">
+    <span class="stamp__main" style="font-size:32px">ARCHIVED</span>
+    <span class="stamp__sub">END OF FILE</span>
+  </div>
+  <div class="footer__links">
+    <a href="https://github.com/MASTERGJ/gg-dailian">GitHub</a>
+    <a href="https://github.com/MASTERGJ/gg-dailian/blob/main/LICENSE">MIT License</a>
+    <a href="https://github.com/MASTERGJ/gg-dailian/blob/main/SKILL.md">SKILL.md</a>
+  </div>
+  <div class="footer__sig">gg-dailian v1.0.0 · MASTERGJ · 2026</div>
+</section>
+
+<script>
+(function(){
+  var pw = document.getElementById('pwGate');
+  var inp = document.getElementById('pwInput');
+  var err = document.getElementById('pwErr');
+
+  inp.addEventListener('input', function(){
+    if(this.value === '1206'){ pw.classList.add('hidden'); }
+  });
+
+  inp.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && this.value !== '1206'){
+      err.classList.add('show');
+      this.value = '';
+      setTimeout(function(){ err.classList.remove('show'); }, 1200);
+    }
+  });
+})();
+</script>
+</body>
+</html>
